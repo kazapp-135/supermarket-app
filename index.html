@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スーパー爆速入力</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            background-color: #000000;
+        }
+
+        header { text-align: center; margin-bottom: 30px; padding-top: 10px; }
+        h1 { font-size: 24px; letter-spacing: 2px; }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .btn-container { display: flex; margin-bottom: 15px; }
+
+        button {
+            width: 100%;
+            background-color: #FFD700;
+            color: #000000;
+            border: none;
+            padding: 18px;
+            font-size: 22px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
+            transition: 0.2s;
+        }
+
+        button:active { transform: scale(0.98); box-shadow: none; }
+
+        input {
+            width: 100%;
+            background-color: #111111;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 20px;
+            font-size: 32px;
+            font-weight: bold;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+            text-align: center;
+        }
+
+        input:focus {
+            box-shadow: 0 0 15px #FFD700;
+            background-color: #222222;
+        }
+
+        .hidden { display: none !important; }
+
+        .status-message {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 40px;
+            color: #FFF;
+            line-height: 1.6;
+            text-shadow: 0 0 5px #FFD700;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h1>SUPERMARKET</h1>
+    </header>
+
+    <div id="main-section">
+        <div class="input-group">
+            <label>今いくら買った？</label>
+            
+            <div class="btn-container">
+                <button onclick="sendAmount()">送信する</button>
+            </div>
+
+            <input type="number" id="amount-input" pattern="\d*" placeholder="¥ 0">
+        </div>
+    </div>
+
+    <div class="status-message hidden" id="status-section">
+        <p id="status-text">スプレッドシートに送信中...</p>
+    </div>
+</div>
+
+<script>
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzD0dRAZDf0o9d_IWosCbDyPXKJrPfjeN1bWkLdQb4gJOe6Jt0lI_v9Ntbhqz-beZSy/exec";
+    
+    // アプリ起動時に自動でキーボードを立ち上げる
+    window.onload = () => {
+        document.getElementById("amount-input").focus();
+    };
+
+    async function sendAmount() {
+        const inputEl = document.getElementById("amount-input");
+        const val = inputEl.value;
+        
+        if (!val || val === "" || Number(val) <= 0) {
+            alert("金額を入力してください");
+            return;
+        }
+
+        document.getElementById("main-section").classList.add("hidden");
+        const statusSec = document.getElementById("status-section");
+        const statusTxt = document.getElementById("status-text");
+        statusSec.classList.remove("hidden");
+
+        // スーパーアプリからの送信であることを示すタグ（type: "super"）を付与
+        const payload = {
+            type: "super",
+            value: val
+        };
+
+        try {
+            await fetch(GAS_WEBAPP_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            
+            statusTxt.innerHTML = `COMPLETE!<br><br><span style="font-size:15px; color:#CCCC00;">[ ${Number(val).toLocaleString()} 円 ] を記録し、<br>今月の合計金額を更新しました！</span>`;
+            
+            const reloadBtn = document.createElement("button");
+            reloadBtn.innerText = "続けて入力する";
+            reloadBtn.style.marginTop = "30px";
+            reloadBtn.onclick = () => location.reload();
+            statusSec.appendChild(reloadBtn);
+            
+        } catch (e) {
+            statusTxt.innerHTML = `<span style="color:#ff4d4d;">送信エラーが発生しました</span>`;
+            console.error(e);
+        }
+    }
+</script>
+</body>
+</html>
